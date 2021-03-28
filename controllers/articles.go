@@ -19,10 +19,27 @@ import (
 func GetArticles(w http.ResponseWriter, req *http.Request) {
 	// logger
 	log.Printf("%s\t%s\tGetArticles", req.Method, req.RequestURI)
+	keys, ok := req.URL.Query()["limit"]
+	Limit := ""
+	if ok {
+		Limit = keys[0]
+	}
+	keys, ok = req.URL.Query()["cursor"]
+	cursor := ""
+	if ok {
+		cursor = keys[0]
+	}
 
+	articles, err := models.PaginationLogic(Limit, cursor)
+	if err != nil {
+		log.Printf("error to get articles %s", err.Error())
+		w.WriteHeader(http.StatusNoContent)
+		fmt.Fprintf(w, "error to get the articles")
+		return
+	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(models.Articles)
+	err = json.NewEncoder(w).Encode(articles)
 	if err != nil {
 		w.WriteHeader(http.StatusNoContent)
 		fmt.Fprintf(w, "error to get the articles")
@@ -31,14 +48,15 @@ func GetArticles(w http.ResponseWriter, req *http.Request) {
 
 func PostArticles(w http.ResponseWriter, req *http.Request) {
 	log.Printf("%s\t%s\tPostArticles", req.Method, req.RequestURI)
-	if req.Body == nil {
+	if req.ContentLength == 0 {
 		log.Printf("request body is missing {%d}\n", http.StatusBadRequest)
-		fmt.Fprintf(w, "response body is nil")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "request body is nil")
 		return
 	}
 
 	if !strings.Contains(req.Header.Get("Content-type"), "application/json") {
-		log.Printf("content type not accepted {%s}", req.Header.Get("Content-type"))
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "not valid content-type")
 		return
 	}
@@ -54,9 +72,9 @@ func PostArticles(w http.ResponseWriter, req *http.Request) {
 	isObject := len(x) > 0 && x[0] == 123
 
 	// r.Body is a io.ReadCloser, ioutil.NopCloser() in conjunction with bytes.NewReader()
-	// Note :- https://stackoverflow.com/questions/53359013/read-request-body-two-times-in-golang
+	// read request body two times in golang
 	reader := ioutil.NopCloser(bytes.NewReader(data))
-
+	w.WriteHeader(http.StatusOK)
 	if isArray {
 		HandlePostResponse(ResponseIsArray, reader, "ResponseIsArray", w)
 		return
@@ -115,16 +133,24 @@ func GetArticleByID(w http.ResponseWriter, req *http.Request) {
 	ID := mux.Vars(req)["id"]
 	articleID, err := strconv.Atoi(ID)
 	if err != nil {
-		log.Printf("GetArticles : error to type cast the article ID: %s", err.Error())
+		log.Printf("GetArticleByID : error to type cast the article ID: %s", err.Error())
+		w.WriteHeader(http.StatusNotAcceptable)
 		fmt.Fprintf(w, "request failed")
+		return
 	}
 	article := models.GetArticleByID(articleID)
+	if article.Id == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "No records found")
+		return
+	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(article)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "error to get the articles")
+		return
 	}
 }
 
@@ -137,16 +163,18 @@ func SearchTerm(w http.ResponseWriter, req *http.Request) {
 		searchedQuery = keys[0]
 	}
 	if searchedQuery == "" {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusNotAcceptable)
 		fmt.Fprintf(w, "query is blank")
 		return
 	}
 	articles := models.SearchArticles(strings.ToLower(searchedQuery))
 	if len(articles) == 0 {
+		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "No records found")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 	err := json.NewEncoder(w).Encode(articles)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
