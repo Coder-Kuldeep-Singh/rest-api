@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -61,7 +61,6 @@ func CreateArticle(article Article) (Article, error) {
 		}
 	}
 	for _, id := range NotExists {
-		log.Println("creating article")
 		CurrentID = id
 		Articles = append(Articles, article)
 		return article, nil
@@ -78,4 +77,43 @@ func SearchArticles(query string) []Article {
 		}
 	}
 	return articles
+}
+
+func PaginationLogic(Limit, LastCheckedID string) ([]Article, error) {
+	limit := 0
+	LastId := 0
+	if Limit == "" || LastCheckedID == "" {
+		limit = 2
+		LastId = 1
+	} else {
+		newLimit, err := strconv.Atoi(Limit)
+		if err != nil {
+			return nil, err
+		}
+		limit = newLimit
+		LastId, err = strconv.Atoi(LastCheckedID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if limit < 0 || LastId < 0 {
+		return Articles[0:2], nil
+	}
+
+	// handling two way if id not found then index will gonna be zero.
+	index := 0
+	for idx, article := range Articles {
+		if article.Id == LastId {
+			index = idx
+			break
+		}
+	}
+	// if id and index are greater then
+	if index+limit > len(Articles) {
+		return Articles[index : len(Articles)-1], nil
+	}
+
+	articles := Articles[index : index+limit]
+	return articles, nil
 }

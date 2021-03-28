@@ -21,12 +21,12 @@ func TestCreateArticleByEmptyArg(t *testing.T) {
 
 func TestCreateArticleByValidArgs(t *testing.T) {
 	t.Log("..: INITIALIZED TestCreateArticleByValidArgs case :..")
-	article := models.Article{Title: "Learning Golang", Content: "Go", SubTitle: "Golang"}
+	article := models.Article{Id: 5, Title: "Learning Golang", Content: "Go", SubTitle: "Golang"}
 	generated, err := models.CreateArticle(article)
 	if err != nil {
 		t.Errorf("FAIL: error to generate article: %s", err.Error())
 	}
-	if generated.Id != 3 {
+	if generated.Id != 5 {
 		t.Error("FAIL: TestCreateArticleByValidArgs test case failed to generate the article")
 	}
 }
@@ -56,8 +56,8 @@ func TestExistsArticleIDArg(t *testing.T) {
 func TestSearchArticleByEmptyArg(t *testing.T) {
 	t.Log("..: INITIALIZED TestSearchArticleByEmptyArg case :..")
 	articles := models.SearchArticles("")
-	if len(articles) != 0 {
-		t.Error("FAIL: unexpected data found, Expecting nil articles")
+	if articles[0].Id != 1 {
+		t.Error("FAIL: unexpected data found")
 	} else {
 		log.Println("PASS: test case pass")
 	}
@@ -74,5 +74,49 @@ func TestSearchArticleByArg(t *testing.T) {
 		t.Errorf("FAIL: unexpected result found %+v", articles)
 	} else {
 		log.Println("PASS: test case pass")
+	}
+}
+
+func TestPaginationValidLogic(t *testing.T) {
+	t.Log("..: INITIALIZED TestPaginationValidLogic case :..")
+	articles, err := models.PaginationLogic("2", "1")
+	if err != nil {
+		t.Errorf("TestPaginationValidLogic failed : %s", err.Error())
+	}
+	if len(articles) == 0 {
+		t.Error("FAIL: unexpected data found")
+	}
+}
+
+func TestPaginationBlankLogic(t *testing.T) {
+	t.Log("..: INITIALIZED TestPaginationBlankLogic case :..")
+	articles, err := models.PaginationLogic("", "")
+	if err != nil {
+		t.Errorf("TestPaginationBlankLogic failed : %s", err.Error())
+	}
+	if len(articles) == 0 {
+		t.Error("FAIL: unexpected data found")
+	}
+}
+
+func TestPaginationNegativeArgsLogic(t *testing.T) {
+	t.Log("..: INITIALIZED TestPaginationNegativeArgsLogic case :..")
+	articles, err := models.PaginationLogic("-2", "1")
+	if err != nil {
+		t.Errorf("TestPaginationNegativeArgsLogic failed : %s", err.Error())
+	}
+	if len(articles) == 0 {
+		t.Error("FAIL: unexpected data found")
+	}
+}
+
+func TestPaginationUpperLimitArgLogic(t *testing.T) {
+	t.Log("..: INITIALIZED TestPaginationUpperLimitArgLogic case :..")
+	articles, err := models.PaginationLogic("10", "1")
+	if err != nil {
+		t.Errorf("TestPaginationUpperLimitArgLogic failed : %s", err.Error())
+	}
+	if len(articles) == 0 {
+		t.Error("FAIL: unexpected data found")
 	}
 }
