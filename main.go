@@ -3,19 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
-	"rest-api/controllers"
-
-	"github.com/gorilla/mux"
+	"rest-api/routers"
 )
 
 func main() {
-	r := mux.NewRouter()
-	// r.HandleFunc("/articles", controllers.GetArticles).Methods("GET")
-	r.Path("/articles").HandlerFunc(controllers.GetArticles).Methods("GET").Name("GetArticles")
-	// r.HandleFunc("/articles", controllers.PostArticles).Methods("POST")
-	r.Path("/articles").HandlerFunc(controllers.PostArticles).Methods("POST").Name("PostArticles")
-	// r.HandleFunc("/articles/{id:[0-9]+}", controllers.GetArticleByID).Methods("GET")
-	r.Path("/articles/{id:[0-9]+}").HandlerFunc(controllers.GetArticleByID).Methods("GET").Name("GetArticles")
-	r.Path("/articles/search").HandlerFunc(controllers.SearchTerm).Methods("GET").Name("SearchTerm")
-	log.Println(http.ListenAndServe(":8000", r))
+	router := routers.Router()
+	log.Println(http.ListenAndServe(":8000", router))
 }
