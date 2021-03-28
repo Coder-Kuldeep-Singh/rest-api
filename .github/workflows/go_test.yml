@@ -1,0 +1,30 @@
+name: Build Test For SC
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+
+    - name: Apt-get update
+      run: sudo apt-get update
+
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15
+
+    - name: go mod
+      run: go mod init sc
+
+    - name: go get
+      run: go get
+
+    - name: go test coverage report
+      run: ./coverage.sh
