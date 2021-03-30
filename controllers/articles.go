@@ -55,11 +55,11 @@ func PostArticles(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if !strings.Contains(req.Header.Get("Content-type"), "application/json") {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "not valid content-type")
-		return
-	}
+	// if !strings.Contains(req.Header.Get("Content-type"), "application/json") {
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	fmt.Fprintf(w, "not valid content-type")
+	// 	return
+	// }
 
 	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {
